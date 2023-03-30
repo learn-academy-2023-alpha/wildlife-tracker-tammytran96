@@ -154,12 +154,91 @@ Branch: sighting-crud-actions
 
 Acceptance Criteria
 
-Create a resource for animal sightings with the following information: latitude, longitude, date
+✅ Create a resource for animal sightings with the following information: latitude, longitude, date
 Hint: An animal has_many sightings (rails g resource Sighting animal_id:integer ...)
 Hint: Date is written in Active Record as yyyy-mm-dd (“2022-07-28")
-Can create a new animal sighting in the database
-Can update an existing animal sighting in the database
-Can remove an animal sighting in the database
+- $ rails g resource Sighting latitude:in
+teger longitude:integer date:date animal_id:integer
+- $ rails db:migrate
+- app>models>animal.rb
+    - $ has_many :sightings
+- app>models>sighting
+    - $ belongs_to :animal
+- create sightings linked to the animal
+    - crocodile = Animal.find(1)
+    - giraffe = Animal.find(3)
+    - zebra = Animal.find(4)
+    - chimpanzee = Animal.find(5)
+    - crocodile.sightings.create(latitude: 43, longitude: 74, date: "2023-02-02")
+    - zebra.sightings.create(latitude: 43, longitude: 74, date: "2023-02-02")
+    - giraffe.sightings.create(latitude: 43, longitude: 74, date: "2023-02-02")
+    - giraffe.sightings.create(latitude: 43, longitude: 74, date: "2023-02-02")
+    - chimpanzee.sightings.create(latitude: 43, longitude: 74, date: "2023-02-02")
+
+
+✅ Can create a new animal sighting in the database
+- created a method for create
+    def create
+        sighting = Sighting.create(sighting_params)
+        if sighting.valid?
+            render json: sighting
+        else 
+            render json: sighting.errors
+        end
+    end
+- set a POST request for create
+    - localhost:3000/sightings
+{
+    "id": 6,
+    "latitude": 64,
+    "longitude": 23,
+    "date": "2021-05-04",
+    "animal_id": 4,
+    "created_at": "2023-03-30T23:27:59.432Z",
+    "updated_at": "2023-03-30T23:27:59.432Z"
+}
+
+
+✅ Can update an existing animal sighting in the database
+- created a method for update
+    def update
+        sighting = Sighting.find(params[:id])
+        sighting.update(sighting_params)
+        if sighting.valid?
+            render json: sighting
+        else
+            render json: sighting.errors
+        end
+    end
+- set a PATCH request for update
+    - localhost:3000/sightings/4
+    - modified the instance in the body
+    {
+    "latitude": 654,
+    "longitude": 233,
+    "date": "2021-05-03",
+    "animal_id": 3,
+    "id": 4,
+    "created_at": "2023-03-30T23:22:04.968Z",
+    "updated_at": "2023-03-30T23:30:39.038Z"
+}
+
+✅ Can remove an animal sighting in the database
+- created a method for destroy
+    def destroy
+        sighting = Sighting.find(params[:id])
+        if sighting.destroy
+            render json: sighting
+        else 
+            render json: sighting.errors
+        end
+    end
+- set a DELETE request
+    - localhost:3000/sightings/3
+
+
+
+
 Story 3: In order to see the wildlife sightings, as a user of the API, I need to run reports on animal sightings.
 
 Branch: animal-sightings-reports
