@@ -245,9 +245,18 @@ Branch: animal-sightings-reports
 
 Acceptance Criteria
 
-Can see one animal with all its associated sightings
+✅ Can see one animal with all its associated sightings
 Hint: Checkout this example on how to include associated records
-Can see all the all sightings during a given time period
+- edited the show method in animals_controller.rb to include sightings
+    def show
+        animal = Animal.find(params[:id])
+        render json: animal, include: [:sightings]
+    end
+- set a GET request for your desired animal to show their sightings
+    - http://localhost:3000/animals/4
+
+
+✅ Can see all the all sightings during a given time period
 Hint: Your controller can use a range to look like this:
 class SightingsController < ApplicationController
   def index
@@ -258,6 +267,25 @@ end
 Hint: Be sure to add the start_date and end_date to what is permitted in your strong parameters method
 Hint: Utilize the params section in Postman to ease the developer experience
 Hint: Routes with params
+- edited the index method in sights_controller.rb to include date parameters
+    def index
+        sightings = Sighting.where(date: params[:start_date]..params[:end_date])
+        render json: sightings
+    end
+- also added strong params to require a :start_date and :end_date
+    def date_params
+        params.require(:sightings).permit(:start_date, :end_date)
+    end
+- in routes.rb, added a route with params
+    - get '/sightings/:start_date/:end_date' => 'sightings#index'
+- set a GET request in Postman for desired dates
+    - http://localhost:3000/sightings/2020-02-02/2021-12-31
+
+
+
+
+
+
 Stretch Challenges
 Story 4: In order to see the wildlife sightings contain valid data, as a user of the API, I need to include proper specs.
 
