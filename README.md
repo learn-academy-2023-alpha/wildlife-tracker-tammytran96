@@ -73,6 +73,8 @@ Acceptance Criteria
 
 
 ✅ Can create a new animal in the database
+- application_controller.rb
+    - $ skip_before_action :verify_authenticity_token
 - created a method for create
     def create
         animal = Animal.create(animal_params)
@@ -283,9 +285,6 @@ Hint: Routes with params
 
 
 
-
-
-
 Stretch Challenges
 Story 4: In order to see the wildlife sightings contain valid data, as a user of the API, I need to include proper specs.
 
@@ -293,13 +292,92 @@ Branch: animal-sightings-specs
 
 Acceptance Criteria
 Validations will require specs in spec/models and the controller methods will require specs in spec/requests.
+- spec>requests are plural
+- spec>models is singular
 
-Can see validation errors if an animal doesn't include a common name and scientific binomial
-Can see validation errors if a sighting doesn't include latitude, longitude, or a date
-Can see a validation error if an animal's common name exactly matches the scientific binomial
-Can see a validation error if the animal's common name and scientific binomial are not unique
-Can see a status code of 422 when a post request can not be completed because of validation errors
+✅ Can see validation errors if an animal doesn't include a common name and scientific binomial
+- spec>models>animal_spec.rb
+    it 'is valid with valid attributes' do
+    crocodile = Animal.create(common_name: 'Crocodile', scientific_binomial: 'Crocodylidae')
+    expect(crocodile).to be_valid
+    end
+  
+    it 'is not valid without a common name' do
+      crocodile = Animal.create(scientific_binomial: 'Crocodylidae')
+      expect(crocodile.errors[:common_name]).to_not be_empty
+    end
+
+    it 'is not valid without a scientific binomial' do
+      crocodile = Animal.create(common_name: 'Crocodile')
+      expect(crocodile.errors[:scientific_binomial]).to_not be_empty
+    end
+- models>animal.rb
+    validates :common_name, :scientific_binomial, presence: true
+
+✅ Can see validation errors if a sighting doesn't include latitude, longitude, or a date
+- spec>models>sighting_spec.rb
+    it 'is not valid without a latitude' do
+      sighting = Sighting.create(longitude: 74, date: "2023-02-02")
+      expect(sighting.errors[:latitude]).to_not be_empty
+    end
+
+    it 'is not valid without a longitude' do
+      sighting = Sighting.create(latitude: 74, date: "2023-02-02")
+      expect(sighting.errors[:longitude]).to_not be_empty
+    end
+
+    it 'is not valid without a date' do
+      sighting = Sighting.create(latitude: 74, longitude: 74)
+      expect(sighting.errors[:date]).to_not be_empty
+    end
+- models>sighting.rb
+    validates :latitude, :longitude, :date, presence: true
+
+✅ Can see a validation error if an animal's common name exactly matches the scientific binomial
+-spec>models>animal_spec.rb
+    it 'is not valid if common name exactly matches scientific binomial' do
+      crocodile = Animal.create(common_name: 'Crocodile', scientific_binomial: 'Crocodile')
+      expect(crocodile.errors[:common_name]).to_not be_empty
+    end
+- models>animal.rb
+    validates :common_name, exclusion: { in: ->(name) { [name.scientific_binomial] } }
+
+✅ Can see a validation error if the animal's common name and scientific binomial are not unique
+-spec>models>animal_spec.rb
+    it 'is not valid if common name is not unique' do
+      Animal.create(common_name: 'Crocodile', scientific_binomial: 'Crocodylidae')
+      crocodile = Animal.create(common_name: 'Crocodile', scientific_binomial: 'Crocodylidae')
+      expect(crocodile.errors[:common_name]).to_not be_empty
+    end
+
+    it 'is not valid if scientific binomial is not unique' do
+      Animal.create(common_name: 'Crocodile', scientific_binomial: 'Crocodylidae')
+      crocodile = Animal.create(common_name: 'Crocodile', scientific_binomial: 'Crocodylidae')
+      expect(crocodile.errors[:scientific_binomial]).to_not be_empty
+    end
+- models>animal.rb
+    validates :common_name, :scientific_binomial, uniqueness: true
+
+
+✅ Can see a status code of 422 when a post request can not be completed because of validation errors
 Hint: Handling Errors in an API Application the Rails Way
+- edited the create method in animals_controller.rb and sightings_controller.rb
+    def create
+        animal = Animal.create(animal_params)
+        if animal.valid?
+            render json: animal
+        else 
+            render json: animal.errors, status: :unprocessable_entity
+        end
+    end
+- sent a POST request in Postman with missing fields (http://localhost:3000/animals)
+    {
+   "common_name": "cfdvd"
+    }
+- received a 422 Unprocessable Entity
+    {"scientific_binomial":["can't be blank"]}
+
+
 Story 5: In order to increase efficiency, as a user of the API, I need to add an animal and a sighting at the same time.
 
 Branch: submit-animal-with-sightings
